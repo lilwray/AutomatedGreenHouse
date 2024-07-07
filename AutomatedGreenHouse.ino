@@ -1,16 +1,17 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 #include <DHT.h>
-#include <LiquidCrystal.h>
 
 // Constants for DHT sensor (DHT11)
-#define DHTPIN 2     // Pin where the DHT sensor is connected
+#define DHTPIN 7     // Pin where the DHT sensor is connected
 #define DHTTYPE DHT11 // Type of DHT sensor (DHT11 or DHT22)
 
 // Constants for soil moisture sensor
 const int soilMoisturePin = A0; // Analog pin for soil moisture sensor
 
 // Constants for relay modules controlling pump and lamp
-const int pumpRelayPin = 3; // Digital pin for pump relay
-const int lampRelayPin = 4; // Digital pin for lamp relay
+const int pumpRelayPin = 2; // Digital pin for pump relay
+const int lampRelayPin = 3; // Digital pin for lamp relay
 
 // Constants for LCD (using 2004 LCD)
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // RS, EN, D4, D5, D6, D7
@@ -22,6 +23,7 @@ const int lampOnHoursIdeal = 12;
 const int lampOnHoursLow = 14;
 const int lampOnHoursHigh = 10;
 const int idealMoisture = 700; // Example threshold value for soil moisture
+const int waterTimeSeconds = 5; //in seconds
 
 // Variables to store sensor readings
 float temperature;
@@ -111,7 +113,7 @@ void controlActuators() {
   // Control pump based on soil moisture
   if (soilMoisture < idealMoisture) {
     digitalWrite(pumpRelayPin, HIGH); // Turn on pump
-    delay(5000);  // Example: water for 5 seconds
+    delay(waterTimeSeconds * 1000);  // in milliseconds (ms)
     digitalWrite(pumpRelayPin, LOW); // Turn off pump
   } else {
     digitalWrite(pumpRelayPin, LOW); // Ensure pump is off

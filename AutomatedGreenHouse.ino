@@ -1,6 +1,6 @@
+#include <DHT.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <DHT.h>
 
 // Constants for DHT sensor (DHT11)
 #define DHTPIN 7     // Pin where the DHT sensor is connected
@@ -8,13 +8,14 @@
 
 // Constants for soil moisture sensor
 const int soilMoisturePin = A0; // Analog pin for soil moisture sensor
+const inst sensorPowerPin = 6; 
 
 // Constants for relay modules controlling pump and lamp
 const int pumpRelayPin = 2; // Digital pin for pump relay
 const int lampRelayPin = 3; // Digital pin for lamp relay
 
-// Constants for LCD (using 2004 LCD)
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // RS, EN, D4, D5, D6, D7
+// Constants for LCD (using 2004 LCD with I2C)
+LiquidCrystal_I2C lcd(0x3F, 20, 4); // I2C address 0x3F, 20 columns and 4 rows
 
 // Constants for set constraints
 const int idealTempMin = 67;
@@ -23,7 +24,7 @@ const int lampOnHoursIdeal = 12;
 const int lampOnHoursLow = 14;
 const int lampOnHoursHigh = 10;
 const int idealMoisture = 700; // Example threshold value for soil moisture
-const int waterTimeSeconds = 5; //in seconds
+const int waterTimeSeconds = 5; // in seconds
 
 // Variables to store sensor readings
 float temperature;
@@ -36,6 +37,8 @@ const unsigned long moistureReadInterval = 86400000; // Interval for moisture re
 void readSensors();
 void controlActuators();
 
+DHT dht(DHTPIN, DHTTYPE);
+
 void setup() {
   // Initialize serial communication
   Serial.begin(9600);
@@ -43,12 +46,14 @@ void setup() {
   // Initialize DHT sensor
   dht.begin();
 
-  // Initialize LCD with the number of columns and rows
-  lcd.begin(20, 4);
+  // Initialize LCD via I2C
+  lcd.init();
+  lcd.backlight();
 
   // Initialize relay pins as outputs
   pinMode(pumpRelayPin, OUTPUT);
   pinMode(lampRelayPin, OUTPUT);
+  pinMode(sensorPowerPin, OUTPUT); 
 }
 
 void loop() {
@@ -113,7 +118,7 @@ void controlActuators() {
   // Control pump based on soil moisture
   if (soilMoisture < idealMoisture) {
     digitalWrite(pumpRelayPin, HIGH); // Turn on pump
-    delay(waterTimeSeconds * 1000);  // in milliseconds (ms)
+    delay(waterTimeSeconds * 1000);  // in ms
     digitalWrite(pumpRelayPin, LOW); // Turn off pump
   } else {
     digitalWrite(pumpRelayPin, LOW); // Ensure pump is off

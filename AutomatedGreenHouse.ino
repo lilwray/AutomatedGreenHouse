@@ -8,7 +8,7 @@
 
 // Constants for soil moisture sensor
 const int soilMoisturePin = A0; // Analog pin for soil moisture sensor
-const inst sensorPowerPin = 6; 
+const int sensorPowerPin = 6; 
 
 // Constants for relay modules controlling pump and lamp
 const int pumpRelayPin = 2; // Digital pin for pump relay

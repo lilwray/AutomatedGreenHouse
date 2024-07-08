@@ -47,7 +47,7 @@ void setup() {
   dht.begin();
 
   // Initialize LCD via I2C
-  lcd.init();
+  lcd.begin();
   lcd.backlight();
 
   // Initialize relay pins as outputs

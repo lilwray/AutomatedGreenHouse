@@ -10,8 +10,8 @@
 const int soilMoisturePin = A0; // Analog pin for soil moisture sensor
 
 // Constants for relay modules controlling pump and lamp
-const int pumpRelayPin = 2; // Digital pin for pump relay
-const int lampRelayPin = 3; // Digital pin for lamp relay
+const int pumpRelayPin = A3; // Digital pin for pump relay
+const int lampRelayPin = A2; // Digital pin for lamp relay
 
 // Constants for LCD (using 2004 LCD with I2C)
 LiquidCrystal_I2C lcd(0x27, 20, 4); // I2C address 0x27, 20 columns and 4 rows
@@ -22,13 +22,15 @@ const int idealTempMax = 73;
 const int lampOnHoursIdeal = 12;
 const int lampOnHoursLow = 14;
 const int lampOnHoursHigh = 10;
-const int idealMoisture = 700; // Example threshold value for soil moisture
+const int idealMoisturePercent = 65; // Example threshold value for soil moisture
+const int idealMoisture = 1023 - (idealMoisturePercent * 10.23); // caculated value for ideal moisture for sensor
 const int waterTimeSeconds = 5; // in seconds
 
 // Variables to store sensor readings
 float temperature;
 float humidity;
 int soilMoisture;
+int soilMoistureDisplay;
 unsigned long lastMoistureReadTime = 0;
 const unsigned long moistureReadInterval = 86400000; // Interval for moisture read (1 day in milliseconds)
 unsigned long lastTempHumReadTime = 0;
@@ -53,6 +55,8 @@ void setup() {
   // Initialize relay pins as outputs
   pinMode(pumpRelayPin, OUTPUT);
   pinMode(lampRelayPin, OUTPUT);
+  digitalWrite(lampRelayPin, HIGH); // Turn off lamp
+  digitalWrite(pumpRelayPin, HIGH); // Turn off pump
 
   // Initialize DHT sensor
   dht11.begin();
@@ -87,7 +91,7 @@ void loop() {
 
   lcd.setCursor(0, 3);
   lcd.print("Moisture: ");
-  lcd.print(soilMoisture);
+  lcd.print(soilMoistureDisplay);
   lcd.print("%");
 
   // Control actuators based on sensor data
@@ -108,34 +112,49 @@ void readTempHumSensor() {
 void readMoistureSensor() {
   // Read soil moisture sensor
   soilMoisture = analogRead(soilMoisturePin);
-  soilMoisture = (1023 - soilMoisture) / 10.23;
+  soilMoistureDisplay = (1023 - soilMoisture) / 10.23;
 }
 
 void controlActuators() {
   // Control lamp based on temperature
   if (temperature >= idealTempMin && temperature <= idealTempMax) {
     // Ideal temperature range
-    digitalWrite(lampRelayPin, HIGH); // Turn on lamp
+    digitalWrite(lampRelayPin, LOW); // Turn on lamp
+    // Control pump based on soil moisture
+    if (soilMoisture > idealMoisture) {
+      digitalWrite(pumpRelayPin, LOW); // Turn on pump
+      delay(waterTimeSeconds * 1000);  // in ms
+      digitalWrite(pumpRelayPin, HIGH); // Turn off pump
+    } else {
+      digitalWrite(pumpRelayPin, HIGH); // Ensure pump is off
+    }
     delay(lampOnHoursIdeal * 3600000); // Convert hours to milliseconds
-    digitalWrite(lampRelayPin, LOW);  // Turn off lamp
+    digitalWrite(lampRelayPin, HIGH);  // Turn off lamp
   } else if (temperature < idealTempMin) {
     // Temperature too low
-    digitalWrite(lampRelayPin, HIGH); // Turn on lamp
+    digitalWrite(lampRelayPin, LOW); // Turn on lamp
+    // Control pump based on soil moisture
+    if (soilMoisture > idealMoisture) {
+      digitalWrite(pumpRelayPin, LOW); // Turn on pump
+      delay(waterTimeSeconds * 1000);  // in ms
+      digitalWrite(pumpRelayPin, HIGH); // Turn off pump
+    } else {
+      digitalWrite(pumpRelayPin, HIGH); // Ensure pump is off
+    }
     delay(lampOnHoursLow * 3600000);  // Convert hours to milliseconds
-    digitalWrite(lampRelayPin, LOW);  // Turn off lamp
+    digitalWrite(lampRelayPin, HIGH);  // Turn off lamp
   } else {
     // Temperature too high
-    digitalWrite(lampRelayPin, HIGH); // Turn on lamp
+    digitalWrite(lampRelayPin, LOW); // Turn on lamp
+    // Control pump based on soil moisture
+    if (soilMoisture > idealMoisture) {
+      digitalWrite(pumpRelayPin, LOW); // Turn on pump
+      delay(waterTimeSeconds * 1000);  // in ms
+      digitalWrite(pumpRelayPin, HIGH); // Turn off pump
+    } else {
+      digitalWrite(pumpRelayPin, HIGH); // Ensure pump is off
+    }
     delay(lampOnHoursHigh * 3600000); // Convert hours to milliseconds
-    digitalWrite(lampRelayPin, LOW);  // Turn off lamp
-  }
-
-  // Control pump based on soil moisture
-  if (soilMoisture < idealMoisture) {
-    digitalWrite(pumpRelayPin, HIGH); // Turn on pump
-    delay(waterTimeSeconds * 1000);  // in ms
-    digitalWrite(pumpRelayPin, LOW); // Turn off pump
-  } else {
-    digitalWrite(pumpRelayPin, LOW); // Ensure pump is off
+    digitalWrite(lampRelayPin, HIGH);  // Turn off lamp
   }
 }

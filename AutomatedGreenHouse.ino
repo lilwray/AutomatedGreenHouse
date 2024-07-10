@@ -10,8 +10,8 @@
 const int soilMoisturePin = A0; // Analog pin for soil moisture sensor
 
 // Constants for relay modules controlling pump and lamp
-const int pumpRelayPin = A3; // Digital pin for pump relay
-const int lampRelayPin = A2; // Digital pin for lamp relay
+const int pumpRelayPin = A3; // Analog pin for pump relay
+const int lampRelayPin = A2; // Analog pin for lamp relay
 
 // Constants for LCD (using 2004 LCD with I2C)
 LiquidCrystal_I2C lcd(0x27, 20, 4); // I2C address 0x27, 20 columns and 4 rows
